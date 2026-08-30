@@ -204,20 +204,36 @@ async function showMainApp() {
 
   const savedConvId = sessionStorage.getItem("rag_active_conv");
 
+  // 1. Instant optimistic render of conversation history in sidebar (0ms)
+  const cachedConvs = localStorage.getItem(`rag_convs_${currentUser?.id}`) || sessionStorage.getItem("rag_convs");
+  if (cachedConvs) {
+    try {
+      allConversations = JSON.parse(cachedConvs);
+      renderConversationsList(allConversations);
+    } catch (e) {}
+  }
+
   if (savedConvId) {
-    // Only restore active conversation if the user was actively chatting before page refresh
+    // 2. Instant render of active conversation messages (0ms like ChatGPT)
     currentConversationId = savedConvId;
-    const cached = sessionStorage.getItem(`rag_msgs_${savedConvId}`);
+    const cached = localStorage.getItem(`rag_msgs_${savedConvId}`) || sessionStorage.getItem(`rag_msgs_${savedConvId}`);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.length > 0) {
           renderMessages(parsed);
+        } else {
+          renderMessagesSkeleton();
         }
-      } catch (e) {}
+      } catch (e) {
+        renderMessagesSkeleton();
+      }
+    } else {
+      renderMessagesSkeleton();
     }
 
-    await Promise.all([
+    // Sync latest updates in background
+    Promise.all([
       loadConversations(),
       fetchActiveConversation(savedConvId)
     ]);
@@ -227,9 +243,25 @@ async function showMainApp() {
     const msgContainer = document.getElementById("messagesContainer");
     if (msgContainer) msgContainer.innerHTML = getWelcomeScreenHTML();
 
-    // Load past conversations in sidebar without auto-opening old messages
-    await loadConversations();
+    loadConversations();
   }
+}
+
+function renderMessagesSkeleton() {
+  const container = document.getElementById("messagesContainer");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="chat-skeleton-wrapper">
+      <div class="chat-skeleton-bubble skeleton-user">
+        <div class="skeleton-line short"></div>
+      </div>
+      <div class="chat-skeleton-bubble skeleton-assistant">
+        <div class="skeleton-line long"></div>
+        <div class="skeleton-line medium"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    </div>
+  `;
 }
 
 async function fetchActiveConversation(convId) {
@@ -246,6 +278,7 @@ async function fetchActiveConversation(convId) {
       const msgs = data.messages || [];
       renderMessages(msgs);
       try {
+        localStorage.setItem(`rag_msgs_${convId}`, JSON.stringify(msgs));
         sessionStorage.setItem(`rag_msgs_${convId}`, JSON.stringify(msgs));
       } catch (e) {}
     }
@@ -597,14 +630,20 @@ async function selectConversation(convId) {
   });
 
   // Instant render from local cache if available (0ms)
-  const cached = sessionStorage.getItem(`rag_msgs_${convId}`);
+  const cached = localStorage.getItem(`rag_msgs_${convId}`) || sessionStorage.getItem(`rag_msgs_${convId}`);
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
       if (parsed && parsed.length > 0) {
         renderMessages(parsed);
+      } else {
+        renderMessagesSkeleton();
       }
-    } catch (e) {}
+    } catch (e) {
+      renderMessagesSkeleton();
+    }
+  } else {
+    renderMessagesSkeleton();
   }
 
   try {
@@ -616,6 +655,7 @@ async function selectConversation(convId) {
       const msgs = data.messages || [];
       renderMessages(msgs);
       try {
+        localStorage.setItem(`rag_msgs_${convId}`, JSON.stringify(msgs));
         sessionStorage.setItem(`rag_msgs_${convId}`, JSON.stringify(msgs));
       } catch (e) {}
     }

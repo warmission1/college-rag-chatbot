@@ -1978,3 +1978,53 @@ html.logged-in .app-container {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
   40% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 6px var(--accent-primary)); }
 }
+
+/* ChatGPT / Gemini-Style Shimmer Skeleton Loader */
+.chat-skeleton-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px 24px;
+  max-width: 820px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.chat-skeleton-bubble {
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.chat-skeleton-bubble.skeleton-user {
+  align-self: flex-end;
+  width: 55%;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.chat-skeleton-bubble.skeleton-assistant {
+  align-self: flex-start;
+  width: 85%;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.05) 100%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite linear;
+}
+
+.skeleton-line.short { width: 45%; }
+.skeleton-line.medium { width: 75%; }
+.skeleton-line.long { width: 100%; }
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
