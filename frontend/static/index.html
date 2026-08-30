@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College RAG Assistant — Official Campus AI Portal</title>
+  <link rel="icon" type="image/png" href="/static/images/logo.png?v=10.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    try {
+      if (sessionStorage.getItem('rag_token') && sessionStorage.getItem('rag_user')) {
+        document.documentElement.classList.add('logged-in');
+      }
+    } catch(e) {}
+  </script>
+  <link rel="stylesheet" href="/static/styles.css?v=26.0">
+</head>
+<body>
+  <!-- 3D Animated University Portal Auth Screen -->
+  <div id="authScreen" class="auth-overlay">
+    
+    <!-- Dynamic 3D Campus Background Carousel with Ken-Burns Motion (Lazy Loaded) -->
+    <div class="carousel-bg-slide active" id="bgSlide0" data-bg="/static/images/campus_hero.jpg"></div>
+    <div class="carousel-bg-slide" id="bgSlide1" data-bg="/static/images/library.jpg"></div>
+    <div class="carousel-bg-slide" id="bgSlide2" data-bg="/static/images/classes.jpg"></div>
+    <div class="carousel-bg-slide" id="bgSlide3" data-bg="/static/images/playground.jpg"></div>
+    <div class="carousel-bg-slide" id="bgSlide4" data-bg="/static/images/research_lab.jpg"></div>
+
+    <!-- Cinematic Vignette & Ambient Radial Glows -->
+    <div class="cinema-vignette-overlay"></div>
+    <div class="aurora-orb aurora-1"></div>
+    <div class="aurora-orb aurora-2"></div>
+
+    <!-- Top-Left Floating Brand Pill -->
+    <div class="auth-top-left-brand">
+      <div class="auth-brand-pill">
+        <img src="/static/images/logo.png?v=6.0" alt="Logo" class="brand-logo-img">
+        <div>
+          <span class="brand-text-main">COLLEGE RAG</span>
+          <span class="brand-text-sub">Campus AI Assistant</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3D Interactive Perspective Wrapper -->
+    <div class="auth-3d-wrapper">
+      <div class="auth-3d-card" id="auth3DCard">
+        <!-- 3D Glare Light Effect -->
+        <div class="card-glare" id="cardGlare"></div>
+
+        <div class="card-inner-content">
+          <!-- Card Header -->
+          <div class="compact-auth-header">
+            <div class="compact-logo-badge">
+              <img src="/static/images/logo.png?v=6.0" alt="Logo" class="card-logo-img">
+            </div>
+            <div>
+              <h2 class="compact-auth-title">College Portal</h2>
+              <p class="compact-auth-sub">Sign in to access verified campus knowledge</p>
+            </div>
+          </div>
+
+          <!-- Compact Tabs -->
+          <div class="compact-tabs-wrapper">
+            <button id="authTabLogin" class="tab-btn active" onclick="switchAuthTab('login')">Sign In</button>
+            <button id="authTabRegister" class="tab-btn" onclick="switchAuthTab('register')">Register Account</button>
+          </div>
+
+          <!-- Sign In Form -->
+          <form id="loginForm" onsubmit="handleAuthSubmit(event, 'login')">
+            <div class="form-group-compact">
+              <label>College Email</label>
+              <input type="email" id="loginEmail" required class="compact-input" placeholder="student@college.edu" autocomplete="off">
+            </div>
+            <div class="form-group-compact">
+              <label>Password</label>
+              <input type="password" id="loginPassword" required class="compact-input" placeholder="Enter password" autocomplete="off">
+            </div>
+            <div id="authErrorMessage" class="compact-error-msg" style="display: none;"></div>
+            <button type="submit" id="loginSubmitBtn" class="btn-compact-submit">
+              <span>Sign In to Portal</span>
+              <span class="btn-arrow">→</span>
+            </button>
+
+            <!-- Quick Demo Autofill Chips -->
+            <div class="compact-quick-box">
+              <div class="compact-quick-title">Quick Demo Logins</div>
+              <div class="compact-quick-chips">
+                <div class="quick-chip" onclick="quickFillCredentials('student@college.edu', 'student123')">
+                  🎓 <strong>Student</strong>
+                </div>
+                <div class="quick-chip" onclick="quickFillCredentials('admin@college.edu', 'admin123')">
+                  ⚙️ <strong>Admin</strong>
+                </div>
+              </div>
+            </div>
+          </form>
+
+          <!-- Register Form -->
+          <form id="registerForm" onsubmit="handleAuthSubmit(event, 'register')" style="display: none;">
+            <div class="form-group-compact">
+              <label>Full Name</label>
+              <input type="text" id="regName" required class="compact-input" placeholder="e.g. Alex Johnson">
+            </div>
+            <div class="form-group-compact">
+              <label>Email Address</label>
+              <input type="email" id="regEmail" required class="compact-input" placeholder="e.g. alex@college.edu">
+            </div>
+            <div class="form-group-compact">
+              <label>Department (Optional)</label>
+              <input type="text" id="regDept" class="compact-input" placeholder="e.g. Computer Science">
+            </div>
+            <div class="form-group-compact">
+              <label>Password</label>
+              <input type="password" id="regPassword" required minlength="6" class="compact-input" placeholder="Min 6 characters">
+            </div>
+            <div id="regErrorMessage" class="compact-error-msg" style="display: none;"></div>
+            <button type="submit" class="btn-compact-submit">
+              <span>Create Account</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Main Application Dashboard (Active when logged in) -->
+  <div class="app-container" id="mainAppLayout" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="appSidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand-group">
+          <div class="logo-badge">
+            <img src="/static/images/logo.png?v=9.0" alt="Logo" class="sidebar-logo-img">
+          </div>
+          <div>
+            <h1 class="brand-title">College RAG</h1>
+            <p class="brand-subtitle">Official AI Information Desk</p>
+          </div>
+        </div>
+        <button class="sidebar-toggle-btn" id="collapseSidebarBtn" onclick="toggleSidebar()" title="Hide Sidebar">◀</button>
+      </div>
+
+      <button id="newChatBtn" class="new-chat-btn">
+        <span>+</span> New Conversation
+      </button>
+
+      <div class="sidebar-search-box">
+        <span class="sidebar-search-icon">🔍</span>
+        <input type="text" id="searchConversations" placeholder="Search conversations..." oninput="handleSearchConversations(this.value)" autocomplete="off">
+      </div>
+
+      <div class="nav-tabs" id="sidebarNavTabs" style="display: none;">
+        <button class="tab-btn active" id="tabChat" style="flex:1; padding: 6px;" onclick="switchView('chat')">💬 Chat</button>
+        <button class="tab-btn" id="tabAdmin" style="flex:1; padding: 6px; display: none;" onclick="switchView('admin')">⚙️ Admin</button>
+      </div>
+
+      <div class="sidebar-section-label">
+        <span>RECENT CONVERSATIONS</span>
+      </div>
+
+      <div class="conversations-list" id="conversationsList">
+        <!-- Dynamically rendered conversations -->
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-clickable" onclick="openUserSettingsModal()" title="View Account & Settings">
+          <div class="avatar-wrapper">
+            <div class="avatar" id="userAvatar">U</div>
+            <span class="online-indicator"></span>
+          </div>
+          <div class="user-info">
+            <div class="user-name" id="userName">Student</div>
+            <div class="user-role" id="userRole">STUDENT</div>
+          </div>
+          <div class="profile-settings-hint" title="Settings">⚙️</div>
+        </div>
+        <button class="logout-icon-btn" onclick="handleLogout()" title="Sign Out">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main View Area -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="sidebar-toggle-btn" id="expandSidebarBtn" onclick="toggleSidebar()" title="Show Sidebar" style="display: none;">☰</button>
+          <h2 class="top-title" id="viewHeaderTitle">College Information Desk</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="collection-badge" id="activeCollectionBadge">🛡️ Verified Campus Knowledge Base</span>
+          <button id="topAdminBtn" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; display: none;" onclick="switchView('admin')">Admin Portal</button>
+          <button class="btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);" onclick="handleLogout()">Sign Out</button>
+        </div>
+      </header>
+
+      <!-- Chat View -->
+      <div class="view-container" id="chatView">
+        <div class="messages-container" id="messagesContainer">
+          <!-- Chat messages rendered dynamically -->
+        </div>
+
+        <div class="composer-area">
+          <div class="suggested-questions" id="suggestedQuestions">
+            <span class="suggestion-chip" onclick="askPreset('What is the last date to apply for admission?')">🎓 Admission Deadlines</span>
+            <span class="suggestion-chip" onclick="askPreset('What is the annual fee for CSE first year?')">💰 CSE Fee Structure</span>
+            <span class="suggestion-chip" onclick="askPreset('What are the hostel room rent and curfew timings?')">🏢 Hostel & Curfew</span>
+            <span class="suggestion-chip" onclick="askPreset('What is the minimum attendance required for exams?')">📅 75% Attendance Rule</span>
+            <span class="suggestion-chip" onclick="askPreset('What are the scholarship eligibility criteria for merit students?')">✨ Merit Scholarships</span>
+          </div>
+
+          <div class="input-box-wrapper">
+            <textarea id="chatInput" class="chat-input" rows="1" placeholder="Ask any question about admissions, fees, hostel rules, exams..." autocomplete="off"></textarea>
+            <div class="composer-actions">
+              <button id="voiceBtn" type="button" class="voice-input-btn" onclick="toggleVoiceRecognition()" title="Click to speak (Voice input)">
+                <svg class="mic-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="22"></line>
+                </svg>
+              </button>
+              <button id="sendBtn" class="send-btn" onclick="handleSendMessage()" title="Send Question (Enter)">
+                ➤
+              </button>
+            </div>
+          </div>
+          <div class="composer-footer-hints">
+            <span>⚡ <strong>Verified Grounded RAG</strong> • Strict Handbook Citations</span>
+            <span>Press <kbd>Enter ↵</kbd> to send • <kbd>Shift + Enter</kbd> for new line</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin View -->
+      <div class="view-container" id="adminView" style="display: none;">
+        <div class="admin-view">
+          <h2 style="margin-bottom: 20px; font-weight: 700;">Knowledge Base & Analytics Dashboard</h2>
+          
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-title">Published Documents</div>
+              <div class="metric-value" id="metricPublishedDocs">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Total Chunks</div>
+              <div class="metric-value" id="metricTotalChunks">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Queries Answered</div>
+              <div class="metric-value" id="metricTotalQueries">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Unanswered Rate</div>
+              <div class="metric-value" id="metricUnansweredRate">0%</div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3>Official Documents</h3>
+            <button class="btn-primary" onclick="openUploadModal()">+ Upload New Document</button>
+          </div>
+
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Collection</th>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Chunks</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="documentsTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+
+          <h3 style="margin-top: 36px; margin-bottom: 16px;">Administrative Audit Logs</h3>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th>Actor</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Upload Modal -->
+  <div class="modal-overlay" id="uploadModal" style="display: none;">
+    <div class="modal-card">
+      <h3 style="margin-bottom: 16px;">Upload Official College Document</h3>
+      <form id="uploadForm" onsubmit="handleUpload(event)" style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-secondary);">Document Title</label>
+          <input type="text" id="uploadTitle" required class="chat-input" style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); width: 100%; margin-top: 4px;" placeholder="e.g. Placement Statistics 2026">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-secondary);">Collection</label>
+          <select id="uploadCollection" class="chat-input" style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); width: 100%; margin-top: 4px; background: var(--bg-secondary); color: white;">
+            <option value="admissions">Admissions</option>
+            <option value="hostel">Hostel</option>
+            <option value="academics">Academics</option>
+            <option value="finance">Finance</option>
+            <option value="examinations">Examinations</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-secondary);">File (PDF, DOCX, TXT, MD)</label>
+          <input type="file" id="uploadFile" required accept=".pdf,.docx,.txt,.md" style="margin-top: 4px; color: white;">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <button type="submit" class="btn-primary" style="flex: 1;">Upload & Ingest</button>
+          <button type="button" class="btn-secondary" onclick="closeUploadModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Profile & Settings Modal -->
+  <div class="modal-overlay" id="userSettingsModal" style="display: none;" onclick="if(event.target === this) closeUserSettingsModal()">
+    <div class="modal-card user-settings-card">
+      <div class="modal-header-row">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="modal-header-icon">⚙️</div>
+          <div>
+            <h3 class="modal-title">Account & Preferences</h3>
+            <p class="modal-subtitle">Manage your profile, language, and AI preferences</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeUserSettingsModal()">✕</button>
+      </div>
+
+      <!-- User Profile Header Card -->
+      <div class="settings-profile-badge">
+        <div class="settings-avatar" id="modalUserAvatar">R</div>
+        <div class="settings-user-meta">
+          <div class="settings-user-name" id="modalUserName">Rahul Sharma</div>
+          <div class="settings-user-email" id="modalUserEmail">student@college.edu</div>
+          <div class="settings-badge-pill" id="modalUserRoleBadge">🎓 Verified Student</div>
+        </div>
+      </div>
+
+      <!-- Settings Tabs / Options -->
+      <div class="settings-section">
+        <div class="settings-group-title">Preferences & Interface</div>
+        
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Response Language</div>
+            <div class="settings-hint">Select primary language for AI responses</div>
+          </div>
+          <select id="settingLanguage" class="settings-select" onchange="updateUserPreference('language', this.value)">
+            <option value="en" selected>English (Default)</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+            <option value="es">Español (Spanish)</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">RAG Grounding Accuracy</div>
+            <div class="settings-hint">Strict verification against college handbooks</div>
+          </div>
+          <span class="settings-status-pill">🔒 Strict Grounding</span>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Active Handbooks</div>
+            <div class="settings-hint">Indexed university knowledge collections</div>
+          </div>
+          <span class="settings-status-pill">5 Collections Active</span>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-group-title">Session & Security</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Session Status</div>
+            <div class="settings-hint">Encrypted JWT Authentication</div>
+          </div>
+          <span class="settings-status-pill online">● Active</span>
+        </div>
+      </div>
+
+      <div class="settings-footer-row">
+        <button class="btn-danger-outline" onclick="handleLogout()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          Sign Out
+        </button>
+        <button class="btn-primary" onclick="closeUserSettingsModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=26.0"></script>
+</body>
+</html>

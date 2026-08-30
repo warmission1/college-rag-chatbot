@@ -1,0 +1,45 @@
+# TUITION & ACADEMIC FEE SCHEDULE 2026-2027
+**Document ID:** DOC-FEE-2026-03  
+**Version:** v1.0  
+**Effective Date:** 2026-05-15  
+**Published By:** Office of Finance & Student Accounts  
+
+---
+
+## 1. Computer Science & Engineering (B.Tech CSE) Fee Structure
+For students admitted in the academic year 2026-2027:
+
+### First Year (Semester 1 & Semester 2)
+- **Tuition Fee:** INR 85,000 per semester (INR 1,70,000 per year)
+- **Development Fee:** INR 15,000 per year
+- **Laboratory & Computing Infrastructure Fee:** INR 12,000 per year
+- **Library & Digital Subscriptions:** INR 5,000 per year
+- **Examination Fee:** INR 3,000 per semester
+- **Refundable Institute Caution Deposit:** INR 10,000 (one-time upon admission)
+- **Total First Year Institutional Fee:** INR 2,18,000 (excluding hostel and transport)
+
+### Second to Fourth Year (Per Academic Year)
+- **Tuition Fee:** INR 1,75,000 per year
+- **Development & Lab Fee:** INR 25,000 per year
+- **Examination & Activity Fee:** INR 8,000 per year
+- **Total Annual Fee:** INR 2,08,000 per year
+
+## 2. Other Engineering Departments (ECE, ME, CE)
+- **B.Tech ECE Annual Tuition:** INR 1,50,000 per year
+- **B.Tech Mechanical (ME) Annual Tuition:** INR 1,35,000 per year
+- **B.Tech Civil (CE) Annual Tuition:** INR 1,30,000 per year
+
+## 3. Fee Payment Schedule & Late Fees
+- **Autumn Semester Fee Due Date:** July 31, 2026
+- **Spring Semester Fee Due Date:** January 15, 2027
+- **Late Fee Penalty:** A grace period of 7 days is permitted. Thereafter, a late fine of INR 100 per day is levied up to 15 days, after which registration may be withheld.
+
+## 4. Scholarships & Financial Aid
+1. **Merit Scholarship:** 100% tuition waiver for top 5 rankers in entrance exam; 50% tuition waiver for ranks 6-20.
+2. **Need-cum-Merit Scholarship:** Up to 75% fee waiver for students with annual family income below INR 3.5 Lakhs maintaining CGPA >= 7.5.
+3. **Sports Scholarship:** 25% to 50% fee concession for national/state level athletes.
+
+## 5. Contact & Bank Details
+- **Finance Office:** Room F-201, Admin Tower
+- **Online Payment Portal:** https://portal.college.edu/fees
+- **Email:** accounts@college.edu | +91-11-2876-5411

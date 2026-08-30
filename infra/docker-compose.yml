@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector extension
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: college_rag_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: college_rag
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Background Task Queue
+  redis:
+    image: redis:7-alpine
+    container_name: college_rag_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  # FastAPI Backend API Server
+  backend:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile.backend
+    container_name: college_rag_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/college_rag
+      - REDIS_URL=redis://redis:6379/0
+      - USE_PGVECTOR=True
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_DIR=/app/storage/documents
+      - LLM_PROVIDER=${LLM_PROVIDER:-mock}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-mock}
+      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../storage:/app/storage
+
+volumes:
+  pgdata:
