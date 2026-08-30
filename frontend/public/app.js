@@ -16,6 +16,9 @@ const sceneNames = [
 
 // Initialize Application
 document.addEventListener("DOMContentLoaded", async () => {
+  // Pre-warm backend in background
+  try { fetch("/api/health").catch(() => {}); } catch (e) {}
+
   if (!currentToken || !currentUser) {
     document.documentElement.classList.remove("logged-in");
     showAuthScreen();
@@ -51,43 +54,54 @@ function setupEventListeners() {
   }
 }
 
-// 3D Tilt Physics and Mouse Parallax on Login Card
+// 3D Tilt Physics and Mouse Parallax on Login Card (60FPS Hardware Accelerated)
 function setup3DTilt() {
   const card = document.getElementById("auth3DCard");
   const overlay = document.getElementById("authScreen");
   const glare = document.getElementById("cardGlare");
   if (!card || !overlay) return;
 
-  overlay.addEventListener("mousemove", (e) => {
-    const rect = card.getBoundingClientRect();
-    const cardCenterX = rect.left + rect.width / 2;
-    const cardCenterY = rect.top + rect.height / 2;
-    
+  let ticking = false;
+  let cachedRect = null;
+
+  const updateCardTransform = (e) => {
+    if (!cachedRect) cachedRect = card.getBoundingClientRect();
+    const cardCenterX = cachedRect.left + cachedRect.width / 2;
+    const cardCenterY = cachedRect.top + cachedRect.height / 2;
+
     const mouseX = e.clientX - cardCenterX;
     const mouseY = e.clientY - cardCenterY;
 
-    // Calculate rotation (-10deg to +10deg)
-    const rotateX = -(mouseY / (window.innerHeight / 2)) * 8;
-    const rotateY = (mouseX / (window.innerWidth / 2)) * 8;
+    const rotateX = -(mouseY / (window.innerHeight / 2)) * 6;
+    const rotateY = (mouseX / (window.innerWidth / 2)) * 6;
 
-    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(8px)`;
+    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(4px)`;
 
-    // Update glare position
     if (glare) {
-      const glareX = ((e.clientX - rect.left) / rect.width) * 100;
-      const glareY = ((e.clientY - rect.top) / rect.height) * 100;
+      const glareX = ((e.clientX - cachedRect.left) / cachedRect.width) * 100;
+      const glareY = ((e.clientY - cachedRect.top) / cachedRect.height) * 100;
       glare.style.setProperty("--glare-x", `${glareX}%`);
       glare.style.setProperty("--glare-y", `${glareY}%`);
     }
-  });
+    ticking = false;
+  };
+
+  overlay.addEventListener("mousemove", (e) => {
+    if (!ticking) {
+      requestAnimationFrame(() => updateCardTransform(e));
+      ticking = true;
+    }
+  }, { passive: true });
 
   overlay.addEventListener("mouseleave", () => {
+    cachedRect = null;
     card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)`;
-    card.style.transition = "transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)";
+    card.style.transition = "transform 0.4s ease-out";
   });
 
   overlay.addEventListener("mouseenter", () => {
-    card.style.transition = "transform 0.1s ease-out";
+    cachedRect = card.getBoundingClientRect();
+    card.style.transition = "transform 0.08s ease-out";
   });
 }
 

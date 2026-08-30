@@ -79,30 +79,30 @@ html.logged-in .app-container {
   overflow: hidden;
 }
 
-/* Fullscreen Dynamic 3D Carousel Background Slides */
+/* Fullscreen Dynamic 3D Carousel Background Slides (Hardware Accelerated) */
 .carousel-bg-slide {
   position: absolute;
-  inset: -30px;
+  inset: -20px;
   background-size: cover;
   background-position: center;
   opacity: 0;
   transform: scale(1.02) translateZ(0);
-  transition: opacity 1.2s ease-in-out, transform 8s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: opacity, transform;
+  transition: opacity 0.8s ease-in-out, transform 6s cubic-bezier(0.25, 1, 0.5, 1);
   z-index: 0;
-  filter: brightness(0.7) contrast(1.05);
 }
 
 .carousel-bg-slide.active {
-  opacity: 1;
-  transform: scale(1.08) translateZ(0);
+  opacity: 0.85;
+  transform: scale(1.06) translateZ(0);
 }
 
 /* Cinema Vignette & Lighting */
 .cinema-vignette-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(10, 13, 20, 0.35) 0%, rgba(10, 13, 20, 0.85) 100%),
-    linear-gradient(180deg, rgba(10, 13, 20, 0.65) 0%, rgba(10, 13, 20, 0.2) 50%, rgba(10, 13, 20, 0.9) 100%);
+  background: radial-gradient(circle at 50% 50%, rgba(8, 13, 10, 0.4) 0%, rgba(8, 13, 10, 0.92) 100%),
+    linear-gradient(180deg, rgba(8, 13, 10, 0.7) 0%, rgba(8, 13, 10, 0.3) 50%, rgba(8, 13, 10, 0.95) 100%);
   z-index: 1;
   pointer-events: none;
 }
@@ -110,48 +110,38 @@ html.logged-in .app-container {
 .aurora-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
   pointer-events: none;
-  opacity: 0.4;
+  opacity: 0.3;
   z-index: 1;
+  will-change: transform;
 }
 
 .aurora-1 {
   width: 480px;
   height: 480px;
-  background: radial-gradient(circle, rgba(5, 150, 105, 0.45) 0%, rgba(5, 150, 105, 0) 70%);
+  background: radial-gradient(circle, rgba(5, 150, 105, 0.25) 0%, rgba(5, 150, 105, 0) 70%);
   top: -100px;
   left: 15%;
-  animation: auroraFloat1 14s ease-in-out infinite alternate;
+  animation: auroraFloat1 16s ease-in-out infinite alternate;
 }
 
 .aurora-2 {
   width: 520px;
   height: 520px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0) 70%);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0) 70%);
   bottom: -120px;
   right: 15%;
-  animation: auroraFloat2 18s ease-in-out infinite alternate;
+  animation: auroraFloat2 20s ease-in-out infinite alternate;
 }
 
 @keyframes auroraFloat1 {
-  0% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  100% {
-    transform: translate(60px, 40px) scale(1.15);
-  }
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(40px, 30px, 0) scale(1.08); }
 }
 
 @keyframes auroraFloat2 {
-  0% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  100% {
-    transform: translate(-50px, -30px) scale(1.1);
-  }
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-35px, -20px, 0) scale(1.05); }
 }
 
 /* Top-Left Floating Brand Pill */
