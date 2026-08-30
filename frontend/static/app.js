@@ -215,7 +215,8 @@ async function showMainApp() {
   const savedConvId = sessionStorage.getItem("rag_active_conv");
 
   // 1. Instant optimistic render of conversation history in sidebar (0ms)
-  const cachedConvs = localStorage.getItem(`rag_convs_${currentUser?.id}`) || sessionStorage.getItem("rag_convs");
+  const userKey = currentUser?.id || "default";
+  const cachedConvs = localStorage.getItem(`rag_convs_${userKey}`) || sessionStorage.getItem("rag_convs");
   if (cachedConvs) {
     try {
       allConversations = JSON.parse(cachedConvs);
@@ -496,6 +497,15 @@ let allConversations = [];
 
 async function loadConversations() {
   if (!currentToken) return [];
+  const userKey = currentUser?.id || "default";
+  const cachedConvs = localStorage.getItem(`rag_convs_${userKey}`) || sessionStorage.getItem("rag_convs");
+  if (cachedConvs && (!allConversations || allConversations.length === 0)) {
+    try {
+      allConversations = JSON.parse(cachedConvs);
+      renderConversationsList(allConversations);
+    } catch (e) {}
+  }
+
   try {
     const res = await fetch("/api/chat/conversations", {
       headers: { Authorization: `Bearer ${currentToken}` },
@@ -503,6 +513,10 @@ async function loadConversations() {
     if (res.ok) {
       allConversations = await res.json();
       renderConversationsList(allConversations);
+      try {
+        localStorage.setItem(`rag_convs_${userKey}`, JSON.stringify(allConversations));
+        sessionStorage.setItem("rag_convs", JSON.stringify(allConversations));
+      } catch (e) {}
       return allConversations;
     } else if (res.status === 401) {
       handleLogout();
@@ -511,7 +525,7 @@ async function loadConversations() {
   } catch (err) {
     console.error("Failed to load conversations:", err);
   }
-  return [];
+  return allConversations;
 }
 
 function renderConversationsList(convs) {
@@ -761,7 +775,7 @@ function appendMessageToDOM(role, content, sources = [], evidenceStatus = "groun
   if (role === "user") {
     avatar.innerText = "👤";
   } else {
-    avatar.innerHTML = `<img src="/static/images/logo.png?v=14.0" alt="Bot" style="width: 100%; height: 100%; border-radius: 8px; object-fit: cover;">`;
+    avatar.innerHTML = `<img src="/static/images/logo.png?v=20.0" alt="Bot" onerror="this.outerHTML='🏛️'" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
   }
 
   const bubble = document.createElement("div");
@@ -965,8 +979,15 @@ async function handleSendMessage() {
       if (res.ok) {
         const data = await res.json();
         currentConversationId = data.id;
+        try {
+          sessionStorage.setItem("rag_active_conv", data.id);
+        } catch (e) {}
         allConversations.unshift({ id: data.id, title: data.title || question.slice(0, 35) });
         renderConversationsList(allConversations);
+        const userKey = currentUser?.id || "default";
+        try {
+          localStorage.setItem(`rag_convs_${userKey}`, JSON.stringify(allConversations));
+        } catch (e) {}
       } else {
         return;
       }
