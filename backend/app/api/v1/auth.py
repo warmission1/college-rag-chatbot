@@ -59,7 +59,7 @@ def register(req: UserRegisterRequest, db: Database = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(req: UserLoginRequest, db: Database = Depends(get_db)):
+def login(req: UserLoginRequest, background_tasks: BackgroundTasks, db: Database = Depends(get_db)):
     user = db.users.find_one({"email": req.email.lower()})
     if not user or not verify_password(req.password, user.get("hashed_password", "")):
         raise AuthRequiredError("Incorrect email or password")
@@ -67,7 +67,7 @@ def login(req: UserLoginRequest, db: Database = Depends(get_db)):
     if user.get("status") != "active":
         raise AppError(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Account suspended")
 
-    db.users.update_one({"id": user["id"]}, {"$set": {"last_login_at": datetime.utcnow()}})
+    background_tasks.add_task(db.users.update_one, {"id": user["id"]}, {"$set": {"last_login_at": datetime.utcnow()}})
 
     token = create_access_token(user["id"])
     return TokenResponse(

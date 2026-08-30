@@ -347,6 +347,13 @@ async function handleAuthSubmit(event, mode) {
     const email = document.getElementById("loginEmail").value.trim();
     const password = document.getElementById("loginPassword").value.trim();
     const errorEl = document.getElementById("authErrorMessage");
+    const submitBtn = event.target.querySelector("button[type='submit']");
+    const originalBtnText = submitBtn ? submitBtn.innerHTML : "Sign In to Portal";
+    
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Signing in...</span>`;
+    }
     errorEl.style.display = "none";
     
     try {
@@ -371,8 +378,13 @@ async function handleAuthSubmit(event, mode) {
         errorEl.style.display = "block";
       }
     } catch (err) {
-      errorEl.innerText = "Cannot reach server. Make sure `python scripts/run_dev.py` is running.";
+      errorEl.innerText = "Cannot reach server. Please check your internet connection.";
       errorEl.style.display = "block";
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
     }
   } else if (mode === "register") {
     const name = document.getElementById("regName").value.trim();
@@ -380,6 +392,13 @@ async function handleAuthSubmit(event, mode) {
     const department_id = document.getElementById("regDept").value.trim() || null;
     const password = document.getElementById("regPassword").value.trim();
     const errorEl = document.getElementById("regErrorMessage");
+    const submitBtn = event.target.querySelector("button[type='submit']");
+    const originalBtnText = submitBtn ? submitBtn.innerHTML : "Create Account";
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Creating account...</span>`;
+    }
     errorEl.style.display = "none";
 
     try {
@@ -404,8 +423,13 @@ async function handleAuthSubmit(event, mode) {
         errorEl.style.display = "block";
       }
     } catch (err) {
-      errorEl.innerText = "Cannot reach server. Make sure `python scripts/run_dev.py` is running.";
+      errorEl.innerText = "Cannot reach server. Please check your internet connection.";
       errorEl.style.display = "block";
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
     }
   }
 }
