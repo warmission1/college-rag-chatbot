@@ -213,9 +213,9 @@ async function showMainApp() {
   document.getElementById("adminView").style.display = "none";
 
   const savedConvId = sessionStorage.getItem("rag_active_conv");
-
-  // 1. Instant optimistic render of conversation history in sidebar (0ms)
   const userKey = currentUser?.id || "default";
+
+  // Step 1: Render sidebar conversation list FIRST (0ms from cache)
   const cachedConvs = localStorage.getItem(`rag_convs_${userKey}`) || sessionStorage.getItem("rag_convs");
   if (cachedConvs) {
     try {
@@ -224,9 +224,18 @@ async function showMainApp() {
     } catch (e) {}
   }
 
+  // Step 2: Fetch and verify sidebar conversations from backend
+  await loadConversations();
+
+  // Step 3: Load and render the active chat messages
   if (savedConvId) {
-    // 2. Instant render of active conversation messages (0ms like ChatGPT)
     currentConversationId = savedConvId;
+    
+    // Highlight active item in sidebar
+    document.querySelectorAll(".conversation-item").forEach(item => {
+      item.classList.toggle("active", item.dataset.id === savedConvId);
+    });
+
     const cached = localStorage.getItem(`rag_msgs_${savedConvId}`) || sessionStorage.getItem(`rag_msgs_${savedConvId}`);
     if (cached) {
       try {
@@ -243,18 +252,11 @@ async function showMainApp() {
       renderMessagesSkeleton();
     }
 
-    // Sync latest updates in background
-    Promise.all([
-      loadConversations(),
-      fetchActiveConversation(savedConvId)
-    ]);
+    await fetchActiveConversation(savedConvId);
   } else {
-    // Fresh login: start on clean Welcome Screen with prompt suggestions
     currentConversationId = null;
     const msgContainer = document.getElementById("messagesContainer");
     if (msgContainer) msgContainer.innerHTML = getWelcomeScreenHTML();
-
-    loadConversations();
   }
 }
 
