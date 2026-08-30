@@ -154,8 +154,11 @@ function quickFillCredentials(email, password) {
 
 // Auth UI Controls
 function showAuthScreen() {
-  document.getElementById("authScreen").style.display = "flex";
-  document.getElementById("mainAppLayout").style.display = "none";
+  document.documentElement.classList.remove("logged-in");
+  const authEl = document.getElementById("authScreen");
+  const mainEl = document.getElementById("mainAppLayout");
+  if (authEl) authEl.style.display = "flex";
+  if (mainEl) mainEl.style.display = "none";
 
   // Reset form inputs to blank
   const emailInput = document.getElementById("loginEmail");
@@ -184,8 +187,10 @@ function showAuthScreen() {
 async function showMainApp() {
   document.documentElement.classList.add("logged-in");
   if (carouselInterval) clearInterval(carouselInterval);
-  document.getElementById("authScreen").style.display = "none";
-  document.getElementById("mainAppLayout").style.display = "flex";
+  const authEl = document.getElementById("authScreen");
+  const mainEl = document.getElementById("mainAppLayout");
+  if (authEl) authEl.style.display = "none";
+  if (mainEl) mainEl.style.display = "flex";
   updateUserUI();
 
   // Reset view to chat
@@ -199,8 +204,8 @@ async function showMainApp() {
 
   const savedConvId = sessionStorage.getItem("rag_active_conv");
 
-  // Instant render from local cache if we have an active conversation (0ms)
   if (savedConvId) {
+    // Only restore active conversation if the user was actively chatting before page refresh
     currentConversationId = savedConvId;
     const cached = sessionStorage.getItem(`rag_msgs_${savedConvId}`);
     if (cached) {
@@ -211,21 +216,19 @@ async function showMainApp() {
         }
       } catch (e) {}
     }
-  }
 
-  // Load conversation list and active conversation messages in PARALLEL
-  const [convs] = await Promise.all([
-    loadConversations(),
-    savedConvId ? fetchActiveConversation(savedConvId) : Promise.resolve(null)
-  ]);
+    await Promise.all([
+      loadConversations(),
+      fetchActiveConversation(savedConvId)
+    ]);
+  } else {
+    // Fresh login: start on clean Welcome Screen with prompt suggestions
+    currentConversationId = null;
+    const msgContainer = document.getElementById("messagesContainer");
+    if (msgContainer) msgContainer.innerHTML = getWelcomeScreenHTML();
 
-  if (!savedConvId) {
-    if (convs && convs.length > 0) {
-      selectConversation(convs[0].id);
-    } else {
-      currentConversationId = null;
-      document.getElementById("messagesContainer").innerHTML = getWelcomeScreenHTML();
-    }
+    // Load past conversations in sidebar without auto-opening old messages
+    await loadConversations();
   }
 }
 
@@ -369,12 +372,11 @@ function handleLogout() {
   currentUser = null;
   currentConversationId = null;
   try {
-    localStorage.removeItem("rag_token");
-    localStorage.removeItem("rag_user");
-    sessionStorage.removeItem("rag_token");
-    sessionStorage.removeItem("rag_user");
-    sessionStorage.removeItem("rag_active_conv");
+    localStorage.clear();
+    sessionStorage.clear();
   } catch (e) {}
+
+  document.documentElement.classList.remove("logged-in");
 
   // Clear messages, conversation lists, and inputs from memory & DOM
   const msgContainer = document.getElementById("messagesContainer");
