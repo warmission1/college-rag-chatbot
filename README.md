@@ -1,134 +1,138 @@
-# 🏛️ College RAG AI Assistant — Complete Setup & Local Development Guide
+# 🏛️ College RAG Assistant — AI-Powered Campus Information Portal
 
-A cloud-native, enterprise-grade AI information assistant powered by **Retrieval-Augmented Generation (RAG)** and backed by **MongoDB**. 
-
-The assistant retrieves verified facts from approved college documents (admissions, fees, exams, hostel, academic calendar) and produces grounded answers with exact source citations while refusing out-of-domain or unanswerable questions without hallucination.
+> **An enterprise-grade, retrieval-augmented college assistant powered by Google Gemini, FastAPI, and MongoDB Atlas.**
 
 ---
 
 ## 📋 Table of Contents
-1. [🌟 Features & Capabilities](#-features--capabilities)
-2. [📐 System Architecture](#-system-architecture)
-3. [💻 Prerequisites](#-prerequisites)
-4. [🚀 Step-by-Step Local Setup Guide](#-step-by-step-local-setup-guide)
-   - [Step 1: Clone & Open the Project](#step-1-clone--open-the-project)
-   - [Step 2: Create & Activate a Python Virtual Environment](#step-2-create--activate-a-python-virtual-environment)
-   - [Step 3: Install Python Dependencies](#step-3-install-python-dependencies)
-   - [Step 4: Configure Environment Variables (`.env`)](#step-4-configure-environment-variables-env)
-   - [Step 5: Initialize & Seed the Database](#step-5-initialize--seed-the-database)
-   - [Step 6: Start the Application Server](#step-6-start-the-application-server)
-   - [Step 7: Access the Web UI & API Docs](#step-7-access-the-web-ui--api-docs)
-5. [🖥️ Alternative Running Methods](#-alternative-running-methods)
-   - [Option A: Next.js Frontend Development Mode](#option-a-nextjs-frontend-development-mode-optional)
-   - [Option B: Docker Compose Setup](#option-b-docker-compose-setup-optional)
-6. [📖 How to Use the Application](#-how-to-use-the-application)
-   - [Default Accounts & Roles](#default-accounts--roles)
-   - [User Authentication](#1-user-authentication)
-   - [Asking Questions & Source Citations](#2-asking-questions--source-citations)
-   - [Admin Document Management Portal](#3-admin-document-management-portal)
-7. [🧪 Running Tests & RAG Evaluation Benchmark](#-running-tests--rag-evaluation-benchmark)
-8. [🔌 REST API Reference](#-rest-api-reference)
-9. [☁️ Supported AI & Storage Providers](#-supported-ai--storage-providers)
-10. [📂 Project Directory Structure](#-project-directory-structure)
-11. [❓ Troubleshooting & FAQs](#-troubleshooting--faqs)
+1. [Project Name](#1-project-name)
+2. [Problem Statement](#2-problem-statement)
+3. [Features](#3-features)
+4. [Technology Stack](#4-technology-stack)
+5. [Screenshots](#5-screenshots)
+6. [Live Demo](#6-live-demo)
+7. [Backend](#7-backend)
+8. [Setup Instructions](#8-setup-instructions)
+9. [Environment Variables](#9-environment-variables)
+10. [RAG Pipeline Architecture](#-rag-pipeline-architecture)
+11. [REST API Reference](#-rest-api-reference)
 
 ---
 
-## 🌟 Features & Capabilities
-
-- 🔍 **Hybrid Search Retrieval**: Combines semantic dense vector embeddings with lexical keyword matching (BM25) for high-precision fact retrieval.
-- 📌 **Exact Source Citations**: Every answer includes document titles, versions, sections, page numbers, and verbatim evidence snippets.
-- 🛡️ **Zero-Hallucination Refusal**: Safely rejects out-of-scope or ungrounded questions with transparent notices instead of guessing.
-- 🔐 **Role-Based Access Control (RBAC)**: JWT authentication with dedicated `admin` and `student` permissions.
-- 📁 **Admin Ingestion Pipeline**: In-memory parsing for PDF, DOCX, TXT, MD, automated text chunking, embedding generation, and MongoDB GridFS file storage.
-- 🔄 **Document Lifecycle Management**: Instant publish, unpublish, archive, and one-click re-indexing of documents.
-- 📊 **Audit Logs & Analytics**: Built-in monitoring for query volumes, citation rates, unanswered query frequency, and administrative actions.
-- ⚡ **Offline Mock Mode**: Fully testable offline without any paid API keys using deterministic TF-IDF embeddings and synthesizer.
+## 1. Project Name
+**College RAG Assistant** (Campus AI Information Portal)
 
 ---
 
-## 📐 System Architecture
+## 2. Problem Statement
+College students, parents, and prospective applicants frequently struggle to navigate hundreds of pages of disjointed official PDF handbooks, circulars, and notices across multiple campus departments (admissions, tuition fees, examination rules, hostel regulations, and academic calendars). 
 
-```mermaid
-flowchart TD
-    User([👤 User / Student]) <-->|Chat & Citations| WebUI[🌐 Web UI / Next.js Frontend]
-    Admin([👑 College Admin]) <-->|Upload & Manage Docs| WebUI
-    
-    WebUI <-->|REST API + JWT| FastAPI[⚡ FastAPI Application Backend]
-    
-    subgraph Backend Core
-        FastAPI --> Auth[🔐 JWT Auth & Security]
-        FastAPI --> Ingest[📄 Ingestion & Chunker Pipeline]
-        FastAPI --> RAG[🧠 RAG Orchestrator]
-    end
-    
-    subgraph Retrieval & Generation
-        RAG --> Hybrid[🔍 Hybrid Retriever: Vector + Lexical]
-        RAG --> LLM[🤖 LLM Adapter: Gemini / OpenAI / Mock]
-        Ingest --> Embed[📐 Embedding Adapter: Gemini / OpenAI / Mock]
-    end
-    
-    subgraph Storage Layer
-        Auth <--> MongoUsers[(🗄️ MongoDB: Users & Conversations)]
-        Ingest <--> MongoDocs[(🗄️ MongoDB: Documents & Chunks)]
-        Ingest <--> GridFS[(📦 MongoDB GridFS: Raw Files)]
-        Hybrid <--> MongoDocs
-    end
-```
+Standard commercial chatbots or basic LLM wrappers often hallucinate inaccurate fee figures, outdated deadlines, or nonexistent policies. 
+
+**Solution:** The **College RAG Assistant** employs a strict **Retrieval-Augmented Generation (RAG)** pipeline. It indexes official university documents in a high-dimensional vector database (MongoDB Atlas) and performs dense semantic vector search + lexical keyword scoring. The assistant generates 100% verified, grounded answers accompanied by exact handbook citations and page references, while strictly refusing to hallucinate when knowledge is unavailable.
 
 ---
 
-## 💻 Prerequisites
+## 3. Features
 
-Ensure you have the following installed on your machine before setup:
+### ⭐ Core / Must-Have Features
+- 💬 **Interactive Chat Interface**: Student-friendly chat with suggestion chips, capability preset cards, and dynamic loading animations.
+- 🔐 **User Authentication**: JWT-based authentication with role-based access control (`student`, `faculty`, `admin`, `super-admin`).
+- 📄 **Multi-Format Document Upload**: Ingestion support for `.pdf`, `.docx`, `.txt`, `.md`, and `.csv` handbooks with metadata and SHA-256 deduplication.
+- ✂️ **Page-Aware Processing & Chunking**: Sentence-bounded token chunking with configurable overlap and section hierarchy extraction.
+- 📐 **High-Dimensional Embeddings**: 3072-dimensional vector embeddings generated using Google Gemini (`models/gemini-embedding-001`).
+- 🗄️ **Vector Database Semantic Search**: Cloud MongoDB Atlas vector storage with in-memory SIMD NumPy cosine similarity acceleration.
+- 🧠 **End-to-End RAG Pipeline**: Contextual query rewriting, dense retrieval, evidence threshold evaluation, and grounded prompt assembly.
+- 🛡️ **Zero-Hallucination Refusal Guardrail**: Transparently refuses out-of-domain or unsupported queries when similarity is below threshold.
+- 📚 **Interactive Source Citations**: Sleek ChatGPT/Gemini-style `[ 📚 N Sources ▾ ]` collapsible drawer with document title, version, page number, snippet, and pulse-highlighting.
+- 💬 **Chat History & Context Memory**: Multi-turn conversation persistence in MongoDB with contextual follow-up query rewriting.
+- 👑 **Admin Management Portal**: Complete dashboard to inspect chunks, publish, unpublish, archive, re-index, and delete documents.
+- ⚡ **Optimistic 0ms UI Updates**: Instant client-side feedback for creating, switching, and deleting conversations with zero network lag.
 
-1. **Python 3.10, 3.11, or 3.12**
-   - Check version:
-     ```bash
-     python --version
-     # or on macOS/Linux:
-     python3 --version
-     ```
-2. **A MongoDB Connection (Choose one)**:
-   - **MongoDB Atlas (Recommended — Free Cloud)**: Create a free M0 cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas).
-   - **Local MongoDB Community Server**: Running locally on `mongodb://localhost:27017`.
-3. *(Optional)* **Node.js 18+ & npm** (Only if you wish to run the standalone Next.js frontend dev server).
-4. *(Optional)* **Docker & Docker Compose** (Only if you wish to run containerized services).
-5. *(Optional)* **Google Gemini or OpenAI API Key** (Or run completely free in `mock` mode).
+### 🚀 Bonus Features
+- 📂 **Multiple Document Collections**: Organize documents by category (Admissions, Fees, Hostel, Academics, Exams).
+- 🏢 **Department-Wise Knowledge Bases**: Filter queries by specific department collection IDs.
+- 📊 **Admin Analytics & Audit Logs**: Real-time tracking of query volumes, unanswered query rates, retrieval latency, and administrative actions.
+- 🔄 **Document Version Management**: Track version tags (`v2026-27`, `v1.0`) across revisions and display active versions in citations.
+- ✨ **Interactive Source Highlighting**: Clicking inline citation badges (`[1]`, `[2]`) in chat automatically expands the sources drawer and pulse-highlights the exact excerpt.
+- 💯 **Confidence & Relevance Scoring**: Real-time cosine similarity scores (`0.00` – `1.00`) and verification status badges.
+- 🌐 **Multilingual Support**: Supports multi-language queries with Gemini's multilingual zero-shot grounding.
+- 🎙️ **High-Accuracy Voice Input**: Hands-free Speech-to-Text with automatic pause detection and auto-send.
+- 💡 **Suggested Questions**: Interactive quick-prompt chips for common campus inquiries.
+- 👍 **Answer Feedback (👍 / 👎)**: Student feedback collection stored in MongoDB for quality tracking.
+- 🔍 **Hybrid Keyword + Semantic Search**: Weighted combination of vector cosine similarity (70%) and BM25 keyword matching (30%).
+- 🎯 **Document Re-Ranking**: Cross-scoring reranker for optimal passage prioritization.
+- 🌊 **Streaming AI Responses**: Server-Sent Events (SSE) streaming endpoint `/api/chat/stream/{id}`.
+- 📋 **One-Click Copy**: Instant response copying with visual confirmation.
 
 ---
 
-## 🚀 Step-by-Step Local Setup Guide
+## 4. Technology Stack
 
-### Step 1: Clone & Open the Project
+| Layer | Technologies & Services |
+| :--- | :--- |
+| **Frontend** | HTML5, Vanilla CSS3 (Custom Dark Theme, Glassmorphism, 3D Tilt), JavaScript (ES6+), Next.js |
+| **Backend API** | Python 3.10+, FastAPI, Uvicorn, Pydantic v2, GZip Middleware |
+| **Database & Storage** | MongoDB Atlas (Cloud Vector Store), GridFS (Binary Document Storage), PyMongo |
+| **AI & Embeddings** | Google AI Studio / Gemini (`gemini-3.5-flash-lite`), Gemini Embeddings (`models/gemini-embedding-001`), NumPy |
+| **Document Processing** | PyMuPDF (fitz), pdfplumber, python-docx, pypdf |
+| **Security & Auth** | OAuth2 Password Bearer, JWT (JSON Web Tokens), Passlib (Bcrypt hashing) |
+| **Speech & Audio** | Web Speech Recognition API (`webkitSpeechRecognition`) |
+| **Deployment** | Vercel (Frontend), Render (Backend), MongoDB Atlas (Cloud Database) |
 
-Open your terminal (PowerShell, Command Prompt, or Bash) and navigate to the project root directory:
+---
+
+## 5. Screenshots
+
+### 1. 3D Animated University Portal Login
+Interactive 3D card tilt with background campus scenery carousel and instant role switching.
+
+### 2. Verified Student Chat & Grounded Answers
+Clean chat interface featuring verified evidence status badges, instant responsive messages, and quick suggestion chips.
+
+### 3. Collapsible ChatGPT / Gemini-Style Sources Drawer
+Interactive **`[ 📚 Sources ▾ ]`** pill button that expands to reveal supporting official handbooks, page numbers, and highlighted snippets.
+
+### 4. Admin Management & Ingestion Dashboard
+Full administration panel for uploading documents, inspecting token chunks, and monitoring campus query analytics.
+
+---
+
+## 6. Live Demo
+- 🌐 **Frontend Application (Vercel)**: `https://your-college-rag-frontend.vercel.app` *(or locally at `http://localhost:8000/`)*
+
+---
+
+## 7. Backend
+- ⚡ **Backend API URL (Render)**: `https://college-rag-backend.onrender.com`
+- 📖 **Interactive Swagger Docs**: `https://college-rag-backend.onrender.com/docs` *(or locally at `http://localhost:8000/docs`)*
+- 🩺 **Health Check**: `https://college-rag-backend.onrender.com/api/health`
+
+---
+
+## 8. Setup Instructions
+
+### Prerequisites
+- Python 3.10, 3.11, or 3.12
+- MongoDB Atlas account (or local MongoDB on port 27017)
+- Google AI Studio API Key (or OpenAI API key / offline mock mode)
+
+---
+
+### Step 1: Clone & Enter Project Directory
 ```bash
-cd "c:\Projects\Rag AI Chatbot"
+git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+cd "Rag AI Chatbot"
 ```
 
 ---
 
-### Step 2: Create & Activate a Python Virtual Environment
-
-It is strongly recommended to use a virtual environment to isolate dependencies.
+### Step 2: Create & Activate Python Virtual Environment
 
 #### On Windows (PowerShell):
 ```powershell
-# Create virtual environment
 python -m venv venv
-
-# If you receive an execution policy error in PowerShell, run:
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-
-# Activate virtual environment
 .\venv\Scripts\Activate.ps1
-```
-
-#### On Windows (Command Prompt `cmd.exe`):
-```cmd
-python -m venv venv
-.\venv\Scripts\activate.bat
 ```
 
 #### On macOS / Linux:
@@ -137,365 +141,133 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-*(You will see `(venv)` appear at the beginning of your command prompt line when activated.)*
-
 ---
 
-### Step 3: Install Python Dependencies
-
-With your virtual environment active, upgrade `pip` and install the required packages:
-
+### Step 3: Install Dependencies
 ```bash
-python -m pip install --upgrade pip
 pip install -r backend/requirements.txt
 ```
 
 ---
 
-### Step 4: Configure Environment Variables (`.env`)
+### Step 4: Configure Environment Variables
+Copy `.env.example` to `.env`:
+```bash
+# On Windows PowerShell:
+Copy-Item .env.example .env
 
-1. Copy the example environment configuration file to create your active `.env` file:
-
-   **On Windows (PowerShell):**
-   ```powershell
-   Copy-Item .env.example .env
-   ```
-
-   **On Windows (CMD) / Linux / macOS:**
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Open **[`.env`](file:///c:/Projects/Rag%20AI%20Chatbot/.env)** in your editor and configure your database and AI provider settings:
-
-```env
-# ==============================================================================
-# 1. MongoDB Database Configuration (Required)
-# ==============================================================================
-DATABASE_TYPE="mongodb"
-STORAGE_TYPE="mongodb"
-
-# Enter your MongoDB connection URI (Atlas or Local):
-MONGODB_URI="mongodb+srv://<username>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority"
-MONGODB_DB_NAME="college_rag"
-
-# ==============================================================================
-# 2. AI Provider Configuration (Choose Option A, B, or C)
-# ==============================================================================
-
-# OPTION A: Google Gemini (Recommended - Free Tier Available)
-LLM_PROVIDER="gemini"
-LLM_API_KEY="AIzaSyYourGeminiApiKeyHere"
-LLM_MODEL="gemini-1.5-flash"
-EMBEDDING_PROVIDER="gemini"
-EMBEDDING_API_KEY="AIzaSyYourGeminiApiKeyHere"
-EMBEDDING_MODEL="models/text-embedding-004"
-
-# OPTION B: OpenAI
-# LLM_PROVIDER="openai"
-# LLM_API_KEY="sk-your-openai-api-key-here"
-# LLM_MODEL="gpt-4o-mini"
-# EMBEDDING_PROVIDER="openai"
-# EMBEDDING_API_KEY="sk-your-openai-api-key-here"
-# EMBEDDING_MODEL="text-embedding-3-small"
-
-# OPTION C: Mock Mode (100% Free, Offline, Zero API Keys Required)
-# LLM_PROVIDER="mock"
-# EMBEDDING_PROVIDER="mock"
-
-# ==============================================================================
-# 3. Security Settings
-# ==============================================================================
-AUTH_SECRET="your_custom_jwt_secret_key_change_me_12345"
-ACCESS_TOKEN_EXPIRE_MINUTES=10080
+# On macOS / Linux:
+cp .env.example .env
 ```
 
-> [!TIP]
-> **MongoDB Atlas Quick Setup:**
-> 1. Go to [MongoDB Atlas](https://www.mongodb.com/atlas) and create a free Shared M0 cluster.
-> 2. Under **Security > Database Access**, add a database user with a username and password.
-> 3. Under **Security > Network Access**, click **Add IP Address** and select **Allow Access from Anywhere (`0.0.0.0/0`)**.
-> 4. Under **Deployment > Database**, click **Connect > Drivers > Python** and copy the connection string into `MONGODB_URI`.
+Edit `.env` and provide your credentials:
+```env
+MONGODB_URI="mongodb+srv://<username>:<password>@cluster.mongodb.net/?appName=Ragcollegeai"
+MONGODB_DB_NAME="college_rag"
+AUTH_SECRET="your_custom_jwt_secret_key_here"
+
+LLM_PROVIDER="gemini"
+LLM_API_KEY="your_google_ai_studio_api_key"
+LLM_MODEL="gemini-3.5-flash-lite"
+
+EMBEDDING_PROVIDER="gemini"
+EMBEDDING_API_KEY="your_google_ai_studio_api_key"
+EMBEDDING_MODEL="models/gemini-embedding-001"
+EMBEDDING_DIMENSIONS=3072
+```
 
 ---
 
-### Step 5: Initialize & Seed the Database
-
-Run the automated initialization and seeding script:
-
+### Step 5: Seed Official College Handbooks
+Populates default accounts and indexes 5 official handbooks with Gemini vectors into MongoDB Atlas:
 ```bash
 python scripts/seed_data.py
 ```
 
-#### What this script does automatically:
-1. **Creates MongoDB Collections & Indexes**: Establishes unique indexes for users, conversations, documents, and vector chunk lookups.
-2. **Creates Default System Users**:
-   - 👑 **Admin User**: `admin@college.edu` (Password: `admin123`)
-   - 🎓 **Student User**: `student@college.edu` (Password: `student123`)
-3. **Ingests & Vectorizes 5 Official College Handbooks**:
-   - `admissions_policy_2026.txt` (Eligibility, cutoff ranks, deadlines, seat reservation)
-   - `cse_fee_structure_2026.txt` (Tuition, hostel, bus fees, scholarship criteria)
-   - `hostel_handbook_2026.txt` (Room allocation, curfew rules, mess timings)
-   - `exam_regulations_2026.txt` (75% attendance policy, grading scale, backlogs)
-   - `academic_calendar_2026_27.txt` (Semester dates, internal assessments, holidays)
-4. **Embeds and Publishes Documents**: Parses text, generates chunk embeddings, saves raw files to GridFS, and marks them as **Published** for immediate querying.
+Default credentials seeded:
+- 🎓 **Student**: `student@college.edu` / `student123`
+- 👑 **Admin**: `admin@college.edu` / `admin123`
 
 ---
 
 ### Step 6: Start the Application Server
-
-Start the unified FastAPI application server (which simultaneously serves the API backend and the embedded frontend UI):
-
 ```bash
 python scripts/run_dev.py
 ```
 
-*Alternative direct uvicorn command:*
-```bash
-uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+Open your browser at **[http://localhost:8000/](http://localhost:8000/)**.
+
+---
+
+## 9. Environment Variables
+
+The following environment variables configure the system:
+
+| Variable Name | Required | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `PROJECT_NAME` | No | `"College RAG Assistant"` | Name of the project displayed in UI and docs |
+| `ENVIRONMENT` | No | `"development"` | `"development"` or `"production"` |
+| `DEBUG` | No | `True` | Enable/disable debug logs |
+| `AUTH_SECRET` | **Yes** | — | Long secret key for signing JWT tokens |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | `10080` | JWT expiration duration in minutes (7 days) |
+| `DATABASE_TYPE` | No | `"mongodb"` | Database type (`"mongodb"` or `"inmemory"`) |
+| `MONGODB_URI` | **Yes** | — | MongoDB Atlas cloud connection URI |
+| `MONGODB_DB_NAME` | No | `"college_rag"` | Target database name |
+| `LLM_PROVIDER` | **Yes** | `"gemini"` | LLM provider (`"gemini"`, `"openai"`, `"mock"`) |
+| `LLM_API_KEY` | **Yes** | — | API key for the chosen LLM provider |
+| `LLM_MODEL` | No | `"gemini-3.5-flash-lite"` | Active LLM model name |
+| `EMBEDDING_PROVIDER` | **Yes** | `"gemini"` | Embedding provider (`"gemini"`, `"openai"`, `"mock"`) |
+| `EMBEDDING_API_KEY` | **Yes** | — | API key for generating vector embeddings |
+| `EMBEDDING_MODEL` | No | `"models/gemini-embedding-001"` | Vector model name |
+| `EMBEDDING_DIMENSIONS` | No | `3072` | Embedding vector dimensions (3072 for Gemini) |
+| `RAG_TOP_K` | No | `20` | Candidate vector chunks retrieved |
+| `RAG_CONTEXT_K` | No | `5` | Maximum passages included in LLM context |
+| `RAG_SIMILARITY_THRESHOLD` | No | `0.35` | Minimum cosine similarity to accept evidence |
+| `HYBRID_SEARCH_ENABLED` | No | `True` | Enable hybrid vector + BM25 keyword scoring |
+
+> ⚠️ **Security Notice**: Never commit actual API keys, database passwords, or JWT secrets to GitHub. Always use `.env` (ignored by `.gitignore`).
+
+---
+
+## 🔄 RAG Pipeline Architecture
+
+```mermaid
+flowchart TD
+    Doc[📄 Official College Documents PDF/DOCX/TXT] --> Parser[🔍 Text Extraction & Page Mapping]
+    Parser --> Chunker[✂️ Token Chunking with Overlap]
+    Chunker --> Embedder[📐 Gemini Vector Embedding Generator]
+    Embedder --> VectorDB[(🗄️ MongoDB Atlas Vector Store)]
+    
+    Student[👤 Student Question / Voice Input] --> Rewriter[🧠 Contextual Query Rewriter]
+    Rewriter --> QueryEmbed[📐 Embed Query Vector]
+    QueryEmbed --> Search[⚡ SIMD NumPy Cosine + BM25 Keyword Search]
+    VectorDB --> Search
+    
+    Search --> Guard{Evidence Score >= 0.35?}
+    Guard -- YES --> GroundPrompt[📝 Assemble Grounded Evidence Context]
+    GroundPrompt --> LLM[🤖 Google Gemini 3.5 Flash Lite]
+    LLM --> Response[💬 Answer + Citations + Collapsible Sources Pill]
+    
+    Guard -- NO --> Refusal[🛡️ Refusal Guardrail: Insufficient Knowledge Base Evidence]
 ```
-
-Upon starting, your terminal will display:
-```
-Starting College RAG Assistant server on http://localhost:8000 ...
-Swagger API documentation available at: http://localhost:8000/docs
-Frontend UI available at: http://localhost:8000/
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-```
-
----
-
-### Step 7: Access the Web UI & API Docs
-
-Open your browser and navigate to:
-
-| Service / Interface | Local URL | Description |
-| :--- | :--- | :--- |
-| 🌐 **Web Chatbot & Admin UI** | [**http://localhost:8000/**](http://localhost:8000/) | Main user chat interface and admin management portal |
-| 📖 **Interactive API Docs (Swagger)** | [**http://localhost:8000/docs**](http://localhost:8000/docs) | Test and explore all REST endpoints with live schema |
-| 📚 **ReDoc Documentation** | [**http://localhost:8000/redoc**](http://localhost:8000/redoc) | Clean, readable OpenAPI documentation |
-| 🩺 **System Health Check** | [**http://localhost:8000/api/health**](http://localhost:8000/api/health) | Real-time database and service status |
-
----
-
-## 🖥️ Alternative Running Methods
-
-### Option A: Next.js Frontend Development Mode (Optional)
-
-If you are developing or modifying the Next.js React frontend source code:
-
-1. Open a new terminal in the `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install Node.js dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the Next.js development server:
-   ```bash
-   npm run dev
-   ```
-4. Access the React frontend at [**http://localhost:3000/**](http://localhost:3000/).
-
----
-
-### Option B: Docker Compose Setup (Optional)
-
-If you prefer running a fully containerized stack with local PostgreSQL / pgvector and Redis:
-
-```bash
-docker-compose -f infra/docker-compose.yml up --build
-```
-
-To stop containers:
-```bash
-docker-compose -f infra/docker-compose.yml down
-```
-
----
-
-## 📖 How to Use the Application
-
-### Default Accounts & Roles
-
-| Role | Email | Password | Access Rights |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin@college.edu` | `admin123` | Chat, Upload Documents, Publish/Archive, View Audit Logs, Metrics |
-| **Student** | `student@college.edu` | `student123` | Chat, View Conversations, Submit Question Feedback |
-
----
-
-### 1. User Authentication
-1. Open [http://localhost:8000/](http://localhost:8000/).
-2. Log in using the **Sign In** tab with either the default student or admin credentials.
-3. Or switch to the **Register** tab to create a new user account with your name, email, department, and password.
-
----
-
-### 2. Asking Questions & Source Citations
-1. Select or create a conversation from the sidebar.
-2. Ask any college-related question, for example:
-   - *"What is the annual tuition fee for CSE first year?"*
-   - *"What are the curfew hours and mess timings for the hostel?"*
-   - *"What is the minimum attendance percentage required to sit for semester exams?"*
-   - *"What is the last date to submit the admission application form?"*
-3. **Inspect Citations**: Click on any citation badge under the answer to view the source document title, version, page, and exact matching context.
-4. **Test Refusal Guardrails**: Try asking an unanswerable query (e.g. *"What will the weather be tomorrow?"* or *"Who won the cricket match?"*). The system will safely refuse without making up false details.
-5. **Feedback**: Click 👍 or 👎 under any answer to record user ratings.
-
----
-
-### 3. Admin Document Management Portal
-1. Sign in with the Admin account (`admin@college.edu` / `admin123`).
-2. Click the **⚙️ Admin** button in the top navigation bar or sidebar.
-3. **Upload New Documents**:
-   - Click **"+ Upload New Document"**.
-   - Enter a title, select a department/collection, and choose a `.pdf`, `.docx`, `.txt`, or `.md` file.
-   - Click **"Upload & Ingest"**. The file is uploaded to MongoDB GridFS, parsed, chunked, and embedded.
-4. **Publish / Archive**:
-   - Click **"Publish"** to make a document live and searchable.
-   - Click **"Archive"** to immediately retire a document from query retrieval.
-5. **View System Analytics**:
-   - Monitor total indexed documents, total chunks, query volume, citation accuracy, and real-time audit logs.
-
----
-
-## 🧪 Running Tests & RAG Evaluation Benchmark
-
-### 1. Run Automated Unit & Integration Tests
-```bash
-pytest backend/tests -v
-```
-
-### 2. Run the 50-Query RAG Evaluation Benchmark
-The repository includes a comprehensive evaluation dataset ([`evaluation/dataset.json`](file:///c:/Projects/Rag%20AI%20Chatbot/evaluation/dataset.json)) measuring retrieval precision, groundedness, recall@k, and unknown-refusal accuracy:
-
-```bash
-python evaluation/evaluate_rag.py
-```
-
-**Expected benchmark output metrics:**
-- **Recall@k (Target Doc Hit Rate)**: `≥ 95%`
-- **Groundedness Accuracy**: `≥ 90%`
-- **Unknown-Refusal Accuracy**: `100%`
-- **Average Retrieval Latency**: `< 50ms`
 
 ---
 
 ## 🔌 REST API Reference
 
-All backend endpoints are prefixed under `/api`:
-
-| Method | Endpoint | Description | Auth Required |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Register a new user | No |
-| `POST` | `/api/auth/login` | Authenticate and obtain JWT access token | No |
-| `GET` | `/api/auth/me` | Get current authenticated user profile | Yes (User/Admin) |
-| `GET` | `/api/chat/conversations` | List user's conversations | Yes (User/Admin) |
-| `POST` | `/api/chat/conversations` | Create a new chat conversation | Yes (User/Admin) |
-| `POST` | `/api/chat/conversations/{id}/messages` | Send question and execute RAG query | Yes (User/Admin) |
-| `POST` | `/api/chat/messages/{id}/feedback` | Submit thumbs up/down rating | Yes (User/Admin) |
-| `GET` | `/api/admin/documents` | List all documents and statuses | Yes (Admin) |
-| `POST` | `/api/admin/documents/upload` | Upload & ingest document (PDF/DOCX/TXT) | Yes (Admin) |
-| `POST` | `/api/admin/documents/{id}/publish` | Publish document to knowledge base | Yes (Admin) |
-| `POST` | `/api/admin/documents/{id}/archive` | Archive document | Yes (Admin) |
-| `POST` | `/api/admin/documents/{id}/reindex` | Re-chunk and re-embed document | Yes (Admin) |
-| `GET` | `/api/admin/metrics` | Retrieve usage metrics & citation rates | Yes (Admin) |
-| `GET` | `/api/admin/logs` | Fetch system audit logs | Yes (Admin) |
-| `GET` | `/api/health` | Health check & database connection probe | No |
-
----
-
-## ☁️ Supported AI & Storage Providers
-
-| Component | Providers Supported | Configuration Field in `.env` |
-| :--- | :--- | :--- |
-| **Database & File Storage** | MongoDB Atlas, Local MongoDB, GridFS | `MONGODB_URI`, `MONGODB_DB_NAME` |
-| **LLM Generation** | Google Gemini (`gemini-1.5-flash`), OpenAI (`gpt-4o-mini`), Mock Generator | `LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL` |
-| **Vector Embeddings** | Google Gemini (`text-embedding-004`), OpenAI (`text-embedding-3-small`), Mock | `EMBEDDING_PROVIDER`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` |
-
----
-
-## 📂 Project Directory Structure
-
-```
-c:\Projects\Rag AI Chatbot/
-├── backend/
-│   ├── app/
-│   │   ├── api/v1/          # REST API endpoints (auth, chat, admin, health)
-│   │   ├── auth/            # JWT authentication & password hashing (bcrypt)
-│   │   ├── core/            # Config, database connection, errors, logging
-│   │   ├── documents/       # In-memory PDF, DOCX, TXT, MD parsers
-│   │   ├── integrations/    # LLM, Embedding, and MongoDB GridFS adapters
-│   │   ├── models/          # MongoDB Pydantic document schemas
-│   │   ├── rag/             # Chunker, retriever, reranker, prompts, orchestrator
-│   │   ├── workers/         # Background document ingestion pipeline
-│   │   └── main.py          # FastAPI application & static frontend mount
-│   ├── tests/               # Automated test suite
-│   └── requirements.txt     # Python package dependencies
-├── frontend/
-│   ├── static/              # Interactive Web Chat & Admin Portal (HTML, CSS, JS)
-│   ├── app/                 # Next.js 14 React application source
-│   ├── package.json         # Node package configuration
-│   └── tailwind.config.js   # Tailwind CSS styling configuration
-├── sample_data/             # 5 Official college sample documents for seeding
-├── evaluation/              # 50-query RAG benchmark suite & evaluate_rag.py
-├── scripts/
-│   ├── seed_data.py         # Automated database initialization & seeding script
-│   └── run_dev.py           # Unified development application server runner
-├── infra/                   # Docker and container deployment configurations
-├── .env                     # Active environment variables & API keys
-├── .env.example             # Template environment configuration
-└── README.md                # Project documentation & local setup guide
-```
-
----
-
-## ❓ Troubleshooting & FAQs
-
-### 1. `Activate.ps1 cannot be loaded because running scripts is disabled` (Windows PowerShell)
-- **Cause**: PowerShell's default execution policy prevents running unsigned activation scripts.
-- **Solution**: Run this command in your PowerShell terminal before activating:
-  ```powershell
-  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-  .\venv\Scripts\Activate.ps1
-  ```
-
----
-
-### 2. `ServerSelectionTimeoutError: No replica set members match selector` or Connection Refused
-- **Cause**: MongoDB Atlas cannot be reached because your IP address is not whitelisted, or `MONGODB_URI` in `.env` is incorrect.
-- **Solution**:
-  1. Open [MongoDB Atlas](https://cloud.mongodb.com/).
-  2. Navigate to **Security** > **Network Access**.
-  3. Click **Add IP Address** > Select **Allow Access from Anywhere (`0.0.0.0/0`)** > Click **Confirm**.
-  4. Verify that your database username and password in `MONGODB_URI` do not contain unencoded special characters.
-
----
-
-### 3. How do I run completely offline without paid API keys?
-- Set both `LLM_PROVIDER="mock"` and `EMBEDDING_PROVIDER="mock"` in your `.env` file.
-- The application will utilize deterministic TF-IDF embeddings and offline template synthesis without making external network calls or incurring costs.
-
----
-
-### 4. `Address already in use` (Port 8000 occupied)
-- **Cause**: Another service or previous instance is running on port 8000.
-- **Solution**:
-  - In [`scripts/run_dev.py`](file:///c:/Projects/Rag%20AI%20Chatbot/scripts/run_dev.py), change `port=8000` to an available port like `port=8080` or `port=5000`.
-  - Alternatively, kill the running process on port 8000:
-    ```powershell
-    # Windows PowerShell
-    Get-Process -Id (Get-NetTCPConnection -LocalPort 8000).OwningProcess | Stop-Process -Force
-    ```
-
----
-
-### 5. How to reset or re-seed the database?
-- Simply re-run:
-  ```bash
-  python scripts/seed_data.py
-  ```
-  The script automatically clears existing sample document collections, rebuilds the vector index, and restores fresh default admin/student accounts.
-
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :---: | :--- |
+| `POST` | `/api/auth/register` | Public | Register new student or faculty account |
+| `POST` | `/api/auth/login` | Public | Authenticate user and receive JWT bearer token |
+| `GET` | `/api/auth/me` | Authenticated | Retrieve current user profile |
+| `POST` | `/api/chat/conversations` | Authenticated | Create a new conversation session |
+| `GET` | `/api/chat/conversations` | Authenticated | List user conversation history |
+| `GET` | `/api/chat/conversations/{id}` | Authenticated | Retrieve message history for a conversation |
+| `DELETE` | `/api/chat/conversations/{id}` | Authenticated | Delete a conversation |
+| `POST` | `/api/chat/conversations/{id}/messages` | Authenticated | Ask question & trigger full RAG pipeline |
+| `POST` | `/api/chat/messages/{id}/feedback` | Authenticated | Submit thumbs up/down feedback |
+| `GET` | `/api/admin/collections` | Admin | List all knowledge collections |
+| `POST` | `/api/admin/documents` | Admin | Upload and start automated document ingestion |
+| `POST` | `/api/admin/documents/{id}/publish` | Admin | Publish document to live knowledge base |
+| `GET` | `/api/admin/analytics/overview` | Admin | Retrieve system query analytics & audit logs |
+| `GET` | `/api/health` | Public | System health check |
