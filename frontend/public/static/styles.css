@@ -79,7 +79,7 @@ html.logged-in .app-container {
   overflow: hidden;
 }
 
-/* Fullscreen Dynamic 3D Carousel Background Slides (Hardware Accelerated) */
+/* Fullscreen Dynamic 3D Carousel Background Slides (Hardware Accelerated & Vivid) */
 .carousel-bg-slide {
   position: absolute;
   inset: -20px;
@@ -93,16 +93,16 @@ html.logged-in .app-container {
 }
 
 .carousel-bg-slide.active {
-  opacity: 0.85;
-  transform: scale(1.06) translateZ(0);
+  opacity: 0.95;
+  transform: scale(1.04) translateZ(0);
 }
 
-/* Cinema Vignette & Lighting */
+/* Cinema Vignette & Lighting (Subtle & Clear) */
 .cinema-vignette-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(8, 13, 10, 0.4) 0%, rgba(8, 13, 10, 0.92) 100%),
-    linear-gradient(180deg, rgba(8, 13, 10, 0.7) 0%, rgba(8, 13, 10, 0.3) 50%, rgba(8, 13, 10, 0.95) 100%);
+  background: radial-gradient(circle at 50% 50%, rgba(8, 13, 10, 0.15) 0%, rgba(8, 13, 10, 0.65) 100%),
+    linear-gradient(180deg, rgba(8, 13, 10, 0.35) 0%, rgba(8, 13, 10, 0.1) 50%, rgba(8, 13, 10, 0.65) 100%);
   z-index: 1;
   pointer-events: none;
 }

@@ -982,8 +982,28 @@ async function submitFeedback(messageId, rating) {
   }
 }
 
-// Admin Dashboard Functions
+// Admin Dashboard Functions (Optimistic 0ms Instant Render)
 async function loadAdminDashboard() {
+  // 1. Instant optimistic render from session cache if available
+  const cachedOverview = sessionStorage.getItem("rag_admin_overview");
+  const cachedDocs = sessionStorage.getItem("rag_admin_docs");
+  if (cachedOverview) {
+    try {
+      const overview = JSON.parse(cachedOverview);
+      document.getElementById("metricPublishedDocs").innerText = overview.published_documents ?? "-";
+      document.getElementById("metricTotalChunks").innerText = overview.total_chunks ?? "-";
+      document.getElementById("metricTotalQueries").innerText = overview.total_queries ?? "-";
+      document.getElementById("metricUnansweredRate").innerText = `${overview.unanswered_rate_percent ?? 0}%`;
+    } catch (e) {}
+  }
+  if (cachedDocs) {
+    try {
+      const docs = JSON.parse(cachedDocs);
+      renderAdminDocsTable(docs);
+    } catch (e) {}
+  }
+
+  // 2. Fetch fresh live analytics in background
   try {
     const [overviewRes, docsRes, auditRes] = await Promise.all([
       fetch("/api/admin/analytics/overview", { headers: { Authorization: `Bearer ${currentToken}` } }),
@@ -997,51 +1017,60 @@ async function loadAdminDashboard() {
       document.getElementById("metricTotalChunks").innerText = overview.total_chunks;
       document.getElementById("metricTotalQueries").innerText = overview.total_queries;
       document.getElementById("metricUnansweredRate").innerText = `${overview.unanswered_rate_percent}%`;
+      sessionStorage.setItem("rag_admin_overview", JSON.stringify(overview));
     }
 
     if (docsRes.ok) {
       const docs = await docsRes.json();
-      const tbody = document.getElementById("documentsTableBody");
-      tbody.innerHTML = "";
-      docs.forEach((d) => {
-        const row = document.createElement("tr");
-        const statusBadge = d.status === "published" 
-          ? `<span style="color: var(--success); font-weight: 600;">● Published</span>`
-          : `<span style="color: var(--warning); font-weight: 600;">○ ${d.status}</span>`;
-        row.innerHTML = `
-          <td><strong>${d.title}</strong></td>
-          <td><span class="collection-badge">${d.collection_name}</span></td>
-          <td>${d.version}</td>
-          <td>${statusBadge}</td>
-          <td>${d.chunk_count}</td>
-          <td>
-            <button class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="publishDocument('${d.id}')">Publish</button>
-            <button class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="archiveDocument('${d.id}')">Archive</button>
-            <button class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="reindexDocument('${d.id}')">Reindex</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
+      renderAdminDocsTable(docs);
+      sessionStorage.setItem("rag_admin_docs", JSON.stringify(docs));
     }
 
     if (auditRes.ok) {
       const logs = await auditRes.json();
       const tbody = document.getElementById("auditTableBody");
-      tbody.innerHTML = "";
-      logs.slice(0, 10).forEach((l) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${new Date(l.created_at).toLocaleString()}</td>
-          <td><code>${l.action}</code></td>
-          <td>${l.entity_type}</td>
-          <td>${l.actor_user_id.slice(0, 8)}...</td>
-        `;
-        tbody.appendChild(row);
-      });
+      if (tbody) {
+        tbody.innerHTML = "";
+        logs.slice(0, 10).forEach((l) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${new Date(l.created_at).toLocaleString()}</td>
+            <td><code>${l.action}</code></td>
+            <td>${l.entity_type}</td>
+            <td>${l.actor_user_id.slice(0, 8)}...</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
     }
   } catch (err) {
     console.error("Admin dashboard load error:", err);
   }
+}
+
+function renderAdminDocsTable(docs) {
+  const tbody = document.getElementById("documentsTableBody");
+  if (!tbody || !docs) return;
+  tbody.innerHTML = "";
+  docs.forEach((d) => {
+    const row = document.createElement("tr");
+    const statusBadge = d.status === "published" 
+      ? `<span style="color: var(--success); font-weight: 600;">● Published</span>`
+      : `<span style="color: var(--warning); font-weight: 600;">○ ${d.status}</span>`;
+    row.innerHTML = `
+      <td><strong>${d.title}</strong></td>
+      <td><span class="collection-badge">${d.collection_name}</span></td>
+      <td>${d.version}</td>
+      <td>${statusBadge}</td>
+      <td>${d.chunk_count}</td>
+      <td>
+        <button class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="publishDocument('${d.id}')">Publish</button>
+        <button class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="archiveDocument('${d.id}')">Archive</button>
+        <button class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="reindexDocument('${d.id}')">Reindex</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
 }
 
 async function publishDocument(docId) {
