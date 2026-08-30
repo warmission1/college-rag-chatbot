@@ -105,24 +105,27 @@ function setup3DTilt() {
   });
 }
 
-// Dynamic 5-Scene Background Carousel Controls (Progressive Lazy Loading)
+// Dynamic 5-Scene Background Carousel Controls (Instant 0ms Painting)
 function startCarousel() {
   if (carouselInterval) clearInterval(carouselInterval);
   const slides = document.querySelectorAll(".carousel-bg-slide");
   if (!slides || slides.length === 0) return;
 
-  // Defer preloading slides 1-4 until after main page interaction is ready
-  setTimeout(() => {
-    slides.forEach((s) => {
-      if (s.dataset.bg && !s.style.backgroundImage) {
-        const img = new Image();
-        img.src = s.dataset.bg;
-        img.onload = () => {
-          s.style.backgroundImage = `url('${s.dataset.bg}')`;
-        };
-      }
-    });
-  }, 1000);
+  // 1. Immediately ensure first slide background image is painted on frame 1 (0ms)
+  const slide0 = document.getElementById("bgSlide0");
+  if (slide0) {
+    if (!slide0.style.backgroundImage) {
+      slide0.style.backgroundImage = "url('/static/images/campus_hero.jpg')";
+    }
+    slide0.classList.add("active");
+  }
+
+  // 2. Preload remaining slides immediately without setTimeout delay
+  slides.forEach((s) => {
+    if (s.dataset.bg && !s.style.backgroundImage) {
+      s.style.backgroundImage = `url('${s.dataset.bg}')`;
+    }
+  });
 
   carouselInterval = setInterval(() => {
     setCarouselSlide((currentSlideIndex + 1) % slides.length);
@@ -159,6 +162,13 @@ function showAuthScreen() {
   const mainEl = document.getElementById("mainAppLayout");
   if (authEl) authEl.style.display = "flex";
   if (mainEl) mainEl.style.display = "none";
+
+  // Ensure first slide is active and visible immediately
+  const slide0 = document.getElementById("bgSlide0");
+  if (slide0) {
+    slide0.style.backgroundImage = "url('/static/images/campus_hero.jpg')";
+    slide0.classList.add("active");
+  }
 
   // Reset form inputs to blank
   const emailInput = document.getElementById("loginEmail");
